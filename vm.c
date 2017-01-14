@@ -9,6 +9,7 @@
 #include "bpf_common.h"
 #include "be_byteshift.h"
 #include "ubpf.h"
+#include "hmap.h"
 
 unsigned int __bpf_prog_run(void *ctx, const struct bpf_insn *insn);
 
@@ -137,12 +138,17 @@ static inline u64 ubpf_call_base(s32 id, u64 r1, u64 r2, u64 r3,
         attr.map_fd = r1; // map_fd 
         attr.key = r2;
         printf("r1 %llx r2 %llx\n", r1, r2);
-        //return ubpf_lookup_elem(&attr);
-        break;
+        return (u64)ubpf_lookup_map(&attr);
     }
-    case BPF_FUNC_map_update_elem: /* int map_update_elem(&map, &key, &value, flags) */
-        //ubpf_insert_elem(); // always overwrite
-        break;
+    case BPF_FUNC_map_update_elem: { /* int map_update_elem(&map, &key, &value, flags) */
+        union bpf_attr attr;
+		attr.map_fd = r1;
+		attr.key = r2;
+		attr.value = r3;
+        printf("r1 %llx r2 %llx r3 %llx\n", r1, r2, r3);
+		ubpf_insert_map(&attr); // always overwrite
+	 	break;
+	}
     case BPF_FUNC_map_delete_elem: /* int map_delete_elem(&map, &key) */
     default:
         printf("Not support, ID = %d\n", id);

@@ -10,7 +10,7 @@
 #include "ubpf.h"
 
 struct bpf_map_def SEC("maps") my_map = {
-	.type = BPF_MAP_TYPE_ARRAY,
+	.type = BPF_MAP_TYPE_HASH,
 	.key_size = sizeof(unsigned int),
 	.value_size = sizeof(long),
 	.max_entries = 256,
@@ -26,10 +26,20 @@ int bpf_prog1(struct usk_buff *skb)
     return c;
 */
 	int index;
+	u64 *ret;
+	u64 value = 0xdeaddeadbeefbeef;
+    char fmt[] = "socket: %llx\n";
+
 	index = uload_byte(skb, 10);
+	bpf_map_update_elem(&my_map, &index, &value, BPF_ANY);
 	//index = uload_half(skb, 10);
+	ret = bpf_map_lookup_elem(&my_map, &index);
+
+    bpf_trace_printk(fmt, sizeof(fmt), *ret);
+	return *ret;
+
 	//index = uload_word(skb, 10);
-    return index;
+//    return index;
 
 /* work
     char fmt[] = "socket: %d\n";

@@ -4,6 +4,7 @@
 #include <error.h>
 #include <stdio.h>
 #include "bpf.h"
+#include "hmap.h"
 
 static uint32_t cur_hmap_index;
 struct uhmap_elem {

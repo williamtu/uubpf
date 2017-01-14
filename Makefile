@@ -26,7 +26,7 @@ bpf_load.o: bpf_load.c
 vm.o: vm.c
 	$(CC) $(CFLAGS) -c vm.c
 
-map.o: map.c
+hmap.o: hmap.c
 	$(CC) $(CFLAGS) -c map.c
 
 sockex1_kern.o: sockex1_kern.c

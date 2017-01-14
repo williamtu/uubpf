@@ -14,6 +14,7 @@
 #include "libbpf.h"
 
 #include "ubpf.h"
+#include "hmap.h"
 
 static __u64 ptr_to_u64(void *ptr)
 {
@@ -23,6 +24,8 @@ static __u64 ptr_to_u64(void *ptr)
 int bpf_create_map(enum bpf_map_type map_type, int key_size, int value_size,
 		   int max_entries, int map_flags)
 {
+	int fd;
+
 	union bpf_attr attr = {
 		.map_type = map_type,
 		.key_size = key_size,
@@ -31,9 +34,10 @@ int bpf_create_map(enum bpf_map_type map_type, int key_size, int value_size,
 		.map_flags = map_flags,
 	};
 
-    //printf("create map in userspace\n");
-    //return ubpf_create_map(attr);
+    fd = ubpf_create_map(&attr);
+    printf("create map in userspace, fd = %d\n", fd);
 
+	return fd;
 	return syscall(__NR_bpf, BPF_MAP_CREATE, &attr, sizeof(attr));
 }
 

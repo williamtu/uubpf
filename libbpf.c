@@ -34,11 +34,13 @@ int bpf_create_map(enum bpf_map_type map_type, int key_size, int value_size,
 		.map_flags = map_flags,
 	};
 
+// intercept: don't go into kernel
+
     fd = ubpf_create_map(&attr);
     printf("create map in userspace, fd = %d\n", fd);
 
 	return fd;
-	return syscall(__NR_bpf, BPF_MAP_CREATE, &attr, sizeof(attr));
+//	return syscall(__NR_bpf, BPF_MAP_CREATE, &attr, sizeof(attr));
 }
 
 int bpf_update_elem(int fd, void *key, void *value, unsigned long long flags)
@@ -49,6 +51,8 @@ int bpf_update_elem(int fd, void *key, void *value, unsigned long long flags)
 		.value = ptr_to_u64(value),
 		.flags = flags,
 	};
+
+// intercept: don't go into kernel
 
 	return syscall(__NR_bpf, BPF_MAP_UPDATE_ELEM, &attr, sizeof(attr));
 }
@@ -61,6 +65,8 @@ int bpf_lookup_elem(int fd, void *key, void *value)
 		.value = ptr_to_u64(value),
 	};
 
+// intercept: don't go into kernel
+
 	return syscall(__NR_bpf, BPF_MAP_LOOKUP_ELEM, &attr, sizeof(attr));
 }
 
@@ -70,6 +76,8 @@ int bpf_delete_elem(int fd, void *key)
 		.map_fd = fd,
 		.key = ptr_to_u64(key),
 	};
+
+// intercept: don't go into kernel
 
 	return syscall(__NR_bpf, BPF_MAP_DELETE_ELEM, &attr, sizeof(attr));
 }
@@ -89,6 +97,7 @@ int bpf_get_next_key(int fd, void *key, void *next_key)
 
 char bpf_log_buf[LOG_BUF_SIZE];
 
+// UBPF: this generates the packet contents
 static void *build_packet(int len)
 {
     int i;

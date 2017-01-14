@@ -1,11 +1,19 @@
 /* BPF interpreter */
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <linux/bpf.h>
+#include <arpa/inet.h>
+
 // copy from kernel
 #include "bpf_common.h"
 #include "be_byteshift.h"
-//#include "bpf.h"
+unsigned int __bpf_prog_run(void *ctx, const struct bpf_insn *insn);
+
+struct usk_buff {
+    void *data;
+    void *data_end;
+};
 
 /* Registers */
 #define BPF_R0  regs[BPF_REG_0]
@@ -44,18 +52,19 @@
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 #define MAX_BPF_STACK 4096
-typedef char s8;
-typedef unsigned char u8;
-typedef short s16;
+
+typedef signed char s8; 
+typedef unsigned char u8; 
+typedef signed short s16;
 typedef unsigned short u16;
-typedef int s32;
+typedef signed int s32;
 typedef unsigned int u32;
 typedef signed long long s64;
 typedef unsigned long long u64;
 
-#define cpu_to_be16
-#define cpu_to_be32
-#define cpu_to_be64
+#define cpu_to_be16 htons
+#define cpu_to_be32 htonl
+#define cpu_to_be64 htobe64
 #define cpu_to_le16
 #define cpu_to_le32
 #define cpu_to_le64
@@ -71,28 +80,18 @@ typedef unsigned long long u64;
 
 //FIXME
 #define ilog2(x) x
-bool is_power_of_2(unsigned long n)
+static bool is_power_of_2(unsigned long n)
 {
     return (n != 0 && ((n & (n - 1)) == 0));
 }
 
 #define do_div(n, base)                     \
 ({                              \
-    unsigned long __upper, __low, __high, __mod, __base;    \
+    unsigned long __mod = 0, __base;    \
     __base = (base);                    \
     if (__builtin_constant_p(__base) && is_power_of_2(__base)) { \
         __mod = n & (__base - 1);           \
         n >>= ilog2(__base);                \
-    } else {                        \
-        asm("" : "=a" (__low), "=d" (__high) : "A" (n));\
-        __upper = __high;               \
-        if (__high) {                   \
-            __upper = __high % (__base);        \
-            __high = __high / (__base);     \
-        }                       \
-        asm("divl %2" : "=a" (__low), "=d" (__mod)  \
-            : "rm" (__base), "0" (__low), "1" (__upper));   \
-        asm("" : "=A" (n) : "a" (__low), "d" (__high)); \
     }                           \
     __mod;                          \
 })
@@ -133,10 +132,41 @@ static __always_inline void atomic_add(int i, atomic_t *v)
 /* BPF has 10 general purpose 64-bit registers and stack frame. */
 #define MAX_BPF_REG __MAX_BPF_REG
 
-static inline void *bpf_load_pointer(const struct __sk_buff *skb, int k,
+static inline void *bpf_load_pointer(const struct usk_buff *skb, int k,
                      unsigned int size, void *buffer)
 {
-	return skb->data; //FIXME
+	return (void *)skb->data;
+}
+
+static inline u64 ubpf_call_base(s32 id, u64 r1, u64 r2, u64 r3,
+						       u64 r4, u64 r5)
+{
+    printf("call id = %d\n", id);
+    
+    switch(id) {
+    case BPF_FUNC_trace_printk: {
+        //char buffer[128];
+        printf("trace printk FIXME: %s %llx %llx %llx %llx\n",
+            (char *)r1, r2 ,r3, r4, r5);
+        break;
+    }
+    case BPF_FUNC_map_lookup_elem: {/* void *map_lookup_elem(&map, &key) */
+        union bpf_attr attr;
+        attr.map_fd = r1; // map_fd 
+        attr.key = r2;
+        printf("r1 %llx r2 %llx\n", r1, r2);
+        return ubpf_lookup_elem(&attr);
+        break;
+    }
+    case BPF_FUNC_map_update_elem: /* int map_update_elem(&map, &key, &value, flags) */
+        //ubpf_insert_elem(); // always overwrite
+        break;
+    case BPF_FUNC_map_delete_elem: /* int map_delete_elem(&map, &key) */
+    default:
+        printf("Not support, ID = %d\n", id);
+    }
+
+    return 0;
 }
 
 /**
@@ -146,7 +176,7 @@ static inline void *bpf_load_pointer(const struct __sk_buff *skb, int k,
  *
  * Decode and execute eBPF instructions.
  */
-static unsigned int __bpf_prog_run(void *ctx, const struct bpf_insn *insn)
+unsigned int __bpf_prog_run(void *ctx, const struct bpf_insn *insn)
 {
 	u64 stack[MAX_BPF_STACK / sizeof(u64)];
 	u64 regs[MAX_BPF_REG], tmp;
@@ -250,7 +280,7 @@ static unsigned int __bpf_prog_run(void *ctx, const struct bpf_insn *insn)
 		[BPF_LD | BPF_IND | BPF_B] = &&LD_IND_B,
 		[BPF_LD | BPF_IMM | BPF_DW] = &&LD_IMM_DW,
 	};
-	u32 tail_call_cnt = 0;
+	//u32 tail_call_cnt = 0;
 	void *ptr;
 	int off;
 
@@ -388,9 +418,11 @@ select_insn:
 		 * preserves BPF_R6-BPF_R9, and stores return value
 		 * into BPF_R0.
 		 */
-		printf("jmp call not support\n");
+		printf("jmp call ID = %d R1 %llx R2 %llx\n", insn->imm, BPF_R1, BPF_R2);
 //		BPF_R0 = (__bpf_call_base + insn->imm)(BPF_R1, BPF_R2, BPF_R3,
 //						       BPF_R4, BPF_R5);
+		BPF_R0 = ubpf_call_base(insn->imm, BPF_R1, BPF_R2, BPF_R3,
+						       BPF_R4, BPF_R5);
 		CONT;
 
 	JMP_TAIL_CALL: {
@@ -563,7 +595,7 @@ load_word:
 		 *   BPF_R0 - 8/16/32-bit skb data converted to cpu endianness
 		 */
 
-		ptr = bpf_load_pointer((struct __sk_buff *) (unsigned long) CTX, off, 4, &tmp);
+		ptr = bpf_load_pointer((struct usk_buff *) (unsigned long) CTX, off, 4, &tmp);
 		if ((ptr != NULL)) {
 			BPF_R0 = get_unaligned_be32(ptr);
 			CONT;
@@ -573,7 +605,7 @@ load_word:
 	LD_ABS_H: /* BPF_R0 = ntohs(*(u16 *) (skb->data + imm32)) */
 		off = IMM;
 load_half:
-		ptr = bpf_load_pointer((struct __sk_buff *) (unsigned long) CTX, off, 2, &tmp);
+		ptr = bpf_load_pointer((struct usk_buff *) (unsigned long) CTX, off, 2, &tmp);
 		if ((ptr != NULL)) {
 			BPF_R0 = get_unaligned_be16(ptr);
 			CONT;
@@ -583,7 +615,7 @@ load_half:
 	LD_ABS_B: /* BPF_R0 = *(u8 *) (skb->data + imm32) */
 		off = IMM;
 load_byte:
-		ptr = bpf_load_pointer((struct __sk_buff *) (unsigned long) CTX, off, 1, &tmp);
+		ptr = bpf_load_pointer((struct usk_buff *) (unsigned long) CTX, off, 1, &tmp);
 		if ((ptr != NULL)) {
 			BPF_R0 = *(u8 *)ptr;
 			CONT;
@@ -605,12 +637,66 @@ load_byte:
 		printf("unknown opcode %02x\n", insn->code);
 		return 0;
 }
+#if 0
+struct elem {
+    struct hmap_node node;
+    void *key;
+    int key_size;
+    void *value;
+    int value_size;
+};
 
-int main()
-{
-
-    printf("test bpf interpreter\n");
+int ubpf_insert_map(union bpf_attr *attr) {
 
     return 0;
 }
 
+int ubpf_lookup_map(union bpf_attr *attr)
+{
+    struct elem *elem;
+    struct hmap_node *node;
+    void *key, *value;
+    uint32_t hash;
+
+    key = attr->key;
+    value = attr->value;
+
+    for (i = 0; i < attr->key_size; i++)
+        hash = hash_add(hash, *(uint32_t *)key);
+
+    node = hmap_first_with_hash(hmap, hash);
+
+    elem = CONTAINER_OF(node, struct elem, hmap_node);
+
+    memcpy(attr->value, elem->value, value_size);
+
+    return 0;
+}
+
+int ubpf_create_map(union bpf_attr *attr)
+{
+	printf("enter %s\n", __func__);
+
+    struct hmap hmap;
+/*
+     union bpf_attr attr = {
+         .map_type = map_type,
+         .key_size = key_size,
+         .value_size = value_size,
+         .max_entries = max_entries,
+         .map_flags = map_flags,
+     };
+*/
+    hmap_init(&hmap);
+     
+
+	return 0;
+}
+#endif
+/*
+int main()
+{
+    printf("test bpf interpreter\n");
+    return 0;
+}
+*/

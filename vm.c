@@ -1,4 +1,4 @@
-/* BPF interpreter */
+/* BPF VM interpreter */
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -8,12 +8,9 @@
 // copy from kernel
 #include "bpf_common.h"
 #include "be_byteshift.h"
-unsigned int __bpf_prog_run(void *ctx, const struct bpf_insn *insn);
+#include "ubpf.h"
 
-struct usk_buff {
-    void *data;
-    void *data_end;
-};
+unsigned int __bpf_prog_run(void *ctx, const struct bpf_insn *insn);
 
 /* Registers */
 #define BPF_R0  regs[BPF_REG_0]
@@ -53,21 +50,6 @@ struct usk_buff {
 
 #define MAX_BPF_STACK 4096
 
-typedef signed char s8; 
-typedef unsigned char u8; 
-typedef signed short s16;
-typedef unsigned short u16;
-typedef signed int s32;
-typedef unsigned int u32;
-typedef signed long long s64;
-typedef unsigned long long u64;
-
-#define cpu_to_be16 htons
-#define cpu_to_be32 htonl
-#define cpu_to_be64 htobe64
-#define cpu_to_le16
-#define cpu_to_le32
-#define cpu_to_le64
 
 #define LOCK_PREFIX_HERE \
         ".pushsection .smp_locks,\"a\"\n"   \
@@ -155,7 +137,7 @@ static inline u64 ubpf_call_base(s32 id, u64 r1, u64 r2, u64 r3,
         attr.map_fd = r1; // map_fd 
         attr.key = r2;
         printf("r1 %llx r2 %llx\n", r1, r2);
-        return ubpf_lookup_elem(&attr);
+        //return ubpf_lookup_elem(&attr);
         break;
     }
     case BPF_FUNC_map_update_elem: /* int map_update_elem(&map, &key, &value, flags) */

@@ -149,6 +149,7 @@ int ubpf_create_map(union bpf_attr *attr)
 	return id;
 }
 
+#if 0
 int main()
 {
     struct hmap hmap;
@@ -178,4 +179,4 @@ int main()
 
     return 0;
 }
-
+#endif

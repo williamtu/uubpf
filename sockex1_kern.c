@@ -6,8 +6,15 @@
 */
 #include <linux/bpf.h>
 
+#define ETH_P_IP    0x0800      /* Internet Protocol packet */
+#define ETH_P_ARP   0x0806      /* Address Resolution packet    */
+
 #include "bpf_helpers.h"
 #include "ubpf.h"
+#define printk(fmt, ...)    \
+({  char ___fmt[] = fmt;    \
+    bpf_trace_printk(___fmt, sizeof(___fmt), ##__VA_ARGS__);\
+})
 
 struct bpf_map_def SEC("maps") my_map = {
 	.type = BPF_MAP_TYPE_HASH,
@@ -17,8 +24,26 @@ struct bpf_map_def SEC("maps") my_map = {
 };
 
 SEC("socket1")
-//int bpf_prog1(struct __sk_buff *skb)
 int bpf_prog1(struct usk_buff *skb)
+{
+	// basic parsing
+	u16 proto = uload_half(skb, 12);
+
+	if (proto == ETH_P_IP)
+		printk("IP packet");
+	else if (proto == ETH_P_ARP)
+		printk("ARP packet");
+	else
+		printk("proto %x not supoprt\n", proto);
+
+	return 0;
+
+}
+
+#if 0
+SEC("socket2")
+//int bpf_prog1(struct __sk_buff *skb)
+int bpf_prog2(struct usk_buff *skb)
 {
 /* work
     int a = 1, b = 2, c = 3;
@@ -66,4 +91,6 @@ long *value;
 */
 	return 0;
 }
+#endif
+
 char _license[] SEC("license") = "GPL";

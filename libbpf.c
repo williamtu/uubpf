@@ -15,6 +15,7 @@
 
 #include "ubpf.h"
 #include "hmap.h"
+#include "packet.h"
 
 static __u64 ptr_to_u64(void *ptr)
 {
@@ -98,7 +99,7 @@ int bpf_get_next_key(int fd, void *key, void *next_key)
 char bpf_log_buf[LOG_BUF_SIZE];
 
 // UBPF: this generates the packet contents
-static void *build_packet(int len)
+static void *_build_packet(int len)
 {
     int i;
     char *ptr;
@@ -110,7 +111,6 @@ static void *build_packet(int len)
     for (i = 0; i < len; i++)
         ptr[i] = i;
 
-
     return ptr;
 }
 
@@ -118,7 +118,7 @@ int bpf_prog_load(enum bpf_prog_type prog_type,
 		  const struct bpf_insn *insns, int prog_len,
 		  const char *license, int kern_version)
 {
-    int len = 20;
+    int len = 60;
 	union bpf_attr attr = {
 		.prog_type = prog_type,
 		.insns = ptr_to_u64((void *) insns),
@@ -137,7 +137,7 @@ int bpf_prog_load(enum bpf_prog_type prog_type,
 	bpf_log_buf[0] = 0;
 
     struct usk_buff skb;
-    skb.data = build_packet(len);
+    skb.data = build_packet();
     skb.data_end = skb.data + len; 
     printf("run in userspace, return %d\n", __bpf_prog_run(&skb, insns));
 

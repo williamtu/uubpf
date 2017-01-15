@@ -1,9 +1,6 @@
-============
-Open vSwitch
-============
-
-Build Status
-------------
+================
+Userspace BPF VM
+================
 
 About
 -----

@@ -11,6 +11,7 @@ BPFOBJ=sockex1_kern.o two_ebpf.o http_filter.o
 all: $(OBJ) $(BPFOBJ) verify_target_bpf
 	$(CC) $(CFLAGS) $(OBJ) $(LINK) -o sockex1 sockex1_user.c -lelf
 
+# x86 OBJ files
 libbpf.o: libbpf.c
 	$(CC) $(CFLAGS) -c libbpf.c 
 
@@ -46,7 +47,7 @@ verify_target_bpf: verify_cmds
 		true; fi
 
 # BPF program
-sockex1_kern.o: sockex1_kern.c
+%.o: %.c
 	$(CLANG) $(LINUXINCLUDE) \
 		-D__KERNEL__ -D__ASM_SYSREG_H -Wno-unused-value -Wno-pointer-sign \
 		-Wno-compare-distinct-pointer-types \

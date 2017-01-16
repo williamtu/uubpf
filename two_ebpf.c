@@ -76,7 +76,6 @@ struct Check_ip_value {
     } u;
 };
 
-/*
 struct bpf_map_def SEC("maps") Check_ip = {
     .type = BPF_MAP_TYPE_HASH,
     .key_size = sizeof(struct Check_ip_key), 
@@ -89,10 +88,8 @@ struct bpf_map_def SEC("maps") Check_ip_defaultAction = {
     .value_size = sizeof(struct Check_ip_value), 
     .max_entries = 1, 
 };
-*/
 //int ebpf_filter(struct xdp_md* skb){
-//SEC("socket1")
-SEC("prog")
+SEC("socket1")
 int ebpf_filter(struct usk_buff* skb){
     struct Headers_t headers = {
         .ethernet = {
@@ -192,9 +189,8 @@ int ebpf_filter(struct usk_buff* skb){
 
     reject: { return 1; }
 
-return 0;
     accept:
-#if 0
+#if 1
     {
         u8 hit;
         u32 address_0;

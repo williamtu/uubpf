@@ -66,13 +66,6 @@ struct tcp_t {
 SEC("socket1")
 int bpf_prog1(struct usk_buff *skb) {
 
-	//u8 *cursor = 0;
-
-int a = 0;
-a++;
-
-	return a;
-/*
 	//struct ethernet_t *ethernet = cursor_advance(cursor, sizeof(*ethernet));
 	struct ethernet_t *ethernet = (struct ethernet_t *)(skb->data);
 	//filter IP packets (ethernet type = 0x0800)
@@ -162,5 +155,4 @@ a++;
 	DROP:
 	return 0;
 
-*/
 }

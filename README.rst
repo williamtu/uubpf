@@ -19,6 +19,8 @@ $ ./sockex1
 BPF bytecode:
   sockex1_kern.o
 
+Other object files are x86.
+
 Source Code
 -----------
 - vm.c: main BPF interpreter, copy from Linux kernel

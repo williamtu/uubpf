@@ -139,7 +139,7 @@ static inline u64 ubpf_call_base(s32 id, u64 r1, u64 r2, u64 r3,
     switch(id) {
     case BPF_FUNC_trace_printk: {
         //char buffer[128];
-        printf("trace printk FIXME: %s %llx %llx %llx %llx\n",
+        printf("trace printk: %s %llx %llx %llx %llx\n",
             (char *)r1, r2 ,r3, r4, r5);
         break;
     }

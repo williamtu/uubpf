@@ -15,10 +15,6 @@
 */
 #include "bpf_helpers.h"
 #include "ubpf.h"
-#define printk(fmt, ...)    \
-({  char ___fmt[] = fmt;    \
-    bpf_trace_printk(___fmt, sizeof(___fmt), ##__VA_ARGS__);\
-})
 
 struct bpf_map_def SEC("maps") my_map = {
 	.type = BPF_MAP_TYPE_HASH,
@@ -71,7 +67,6 @@ int bpf_prog1(struct usk_buff *skb)
 		printk("proto %x not supoprt\n", proto);
 
 	return 0;
-
 }
 
 SEC("socket2") // test ALU
@@ -83,15 +78,33 @@ int bpf_prog2(struct usk_buff *skb)
     return d;
 }
 
-SEC("socket3") // test MAP
+SEC("socket3") // test goto 
 int bpf_prog3(struct usk_buff *skb)
 {
 	int index = 0;
 	int value = 0, *ret;
 
 	value = uload_half(skb, 12);
-	bpf_map_update_elem(&my_map, &index, &value, BPF_ANY);
+	if (value == ETH_P_IP)
+		goto exit1;
+	if (value == 2)
+		goto exit2;
 
+	printk("value = 0x%x\n", value);
+exit2:
+	printk("value = 0x%x\n", value);
+exit1:
+    return 0;
+}
+
+SEC("socket4") // test MAP
+int bpf_prog4(struct usk_buff *skb)
+{
+	int index = 0;
+	int value = 0, *ret;
+
+	value = uload_half(skb, 12);
+	bpf_map_update_elem(&my_map, &index, &value, BPF_ANY);
 	
 	ret = bpf_map_lookup_elem(&my_map, &index);
 	printk("ret proto = 0x%x\n", *ret);

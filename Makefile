@@ -6,7 +6,7 @@ CC= gcc
 CFLAGS=-g
 OBJ= libbpf.o bpf_load.o vm.o hmap.o
 LINK= -lelf -lopenvswitch -lpthread -lrt
-BPFOBJ=sockex1_kern.o
+BPFOBJ=sockex1_kern.o two_ebpf.o
 
 # LINUXSOURCE
 # LINUXINCLUDE=-nostdinc -isystem /usr/lib/gcc/x86_64-linux-gnu/5/include -I./arch/x86/include \

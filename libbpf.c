@@ -143,7 +143,7 @@ int bpf_prog_load(enum bpf_prog_type prog_type,
 
     return 0;
 
-	return syscall(__NR_bpf, BPF_PROG_LOAD, &attr, sizeof(attr));
+//	return syscall(__NR_bpf, BPF_PROG_LOAD, &attr, sizeof(attr));
 }
 
 int bpf_prog_attach(int prog_fd, int target_fd, enum bpf_attach_type type)

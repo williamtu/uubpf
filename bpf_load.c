@@ -69,6 +69,7 @@ static int load_and_attach(const char *event, struct bpf_insn *prog, int size)
 	attr.wakeup_events = 1;
 
 	if (is_socket) {
+		printf("%s: %s\n", __func__, event);
 		prog_type = BPF_PROG_TYPE_SOCKET_FILTER;
 	} else if (is_kprobe || is_kretprobe) {
 		prog_type = BPF_PROG_TYPE_KPROBE;

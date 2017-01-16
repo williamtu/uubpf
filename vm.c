@@ -176,6 +176,7 @@ static inline u64 ubpf_call_base(s32 id, u64 r1, u64 r2, u64 r3,
  */
 unsigned int __bpf_prog_run(void *ctx, const struct bpf_insn *insn)
 {
+	const struct bpf_insn *insn0 = insn;
 	u64 stack[MAX_BPF_STACK / sizeof(u64)];
 	u64 regs[MAX_BPF_REG], tmp;
 	static const void *jumptable[256] = {
@@ -424,7 +425,7 @@ select_insn:
 		CONT;
 
 	JMP_TAIL_CALL: {
-		printf("no tail call support\n");
+		printf("no tail call support!\n");
 		exit(1);
 #if 0 //no tail call support 
 		struct bpf_map *map = (struct bpf_map *) (unsigned long) BPF_R2;
@@ -543,6 +544,9 @@ out:
 		}
 		CONT;
 	JMP_EXIT:
+		//printf("start insn %p current %p\n", insn0, insn);
+		printf("total insn %lu\n",
+			(u32)(insn - insn0) / sizeof(struct bpf_insn));
 		return BPF_R0;
 
 	/* STX and ST and LDX*/
@@ -634,6 +638,8 @@ load_byte:
 
 	default_label:
 		/* If we ever reach this, we have a bug somewhere. */
+		printf("start insn %p current %p\n", insn0, insn);
+		//printf("%u instruction\n", (unsigned int)(((long)insn - (long)insn0)/sizeof(struct bpf_insn)));
 		printf("unknown opcode %02x\n", insn->code);
 		return 0;
 }

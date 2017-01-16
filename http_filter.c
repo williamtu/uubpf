@@ -8,8 +8,6 @@ https://github.com/iovisor/bcc/blob/master/examples/networking/http_filter/http-
 #include <bcc/proto.h>
 */
 #include <linux/bpf.h>
-#include <stdio.h>
-#include <stdbool.h>
 #include "ubpf.h"
 #include "bpf_helpers.h"
 
@@ -66,10 +64,15 @@ struct tcp_t {
 */
 //int http_filter(struct __sk_buff *skb) {
 SEC("socket1")
-int http_filter(struct usk_buff *skb) {
+int bpf_prog1(struct usk_buff *skb) {
 
-	u8 *cursor = 0;
+	//u8 *cursor = 0;
 
+int a = 0;
+a++;
+
+	return a;
+/*
 	//struct ethernet_t *ethernet = cursor_advance(cursor, sizeof(*ethernet));
 	struct ethernet_t *ethernet = (struct ethernet_t *)(skb->data);
 	//filter IP packets (ethernet type = 0x0800)
@@ -83,7 +86,6 @@ int http_filter(struct usk_buff *skb) {
 	if (ip->nextp != IP_TCP) {
 		goto DROP;
 	}
-
 	u32  tcp_header_length = 0;
 	u32  ip_header_length = 0;
 	u32  payload_offset = 0;
@@ -149,7 +151,6 @@ int http_filter(struct usk_buff *skb) {
 	if ((p[0] == 'H') && (p[1] == 'E') && (p[2] == 'A') && (p[3] == 'D')) {
 		goto KEEP;
 	}
-
 	//no HTTP match
 	goto DROP;
 
@@ -161,4 +162,5 @@ int http_filter(struct usk_buff *skb) {
 	DROP:
 	return 0;
 
+*/
 }

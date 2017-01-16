@@ -8,12 +8,6 @@ OBJ= libbpf.o bpf_load.o vm.o hmap.o
 LINK= -lelf -lopenvswitch -lpthread -lrt
 BPFOBJ=sockex1_kern.o two_ebpf.o http_filter.o
 
-# LINUXSOURCE
-# LINUXINCLUDE=-nostdinc -isystem /usr/lib/gcc/x86_64-linux-gnu/5/include -I./arch/x86/include \
--I./arch/x86/include/generated/uapi -I./arch/x86/include/generated \
--I./include -I./arch/x86/include/uapi \
--I./include/uapi -I./include/generated/uapi -include ./include/linux/kconfig.h
-
 all: $(OBJ) $(BPFOBJ) verify_target_bpf
 	$(CC) $(CFLAGS) $(OBJ) $(LINK) -o sockex1 sockex1_user.c -lelf
 
@@ -62,4 +56,10 @@ sockex1_kern.o: sockex1_kern.c
 clean:
 	@rm -f *.o
 
+
+# LINUXSOURCE
+# LINUXINCLUDE=-nostdinc -isystem /usr/lib/gcc/x86_64-linux-gnu/5/include -I./arch/x86/include \
+-I./arch/x86/include/generated/uapi -I./arch/x86/include/generated \
+-I./include -I./arch/x86/include/uapi \
+-I./include/uapi -I./include/generated/uapi -include ./include/linux/kconfig.h
 

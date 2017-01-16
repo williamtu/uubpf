@@ -2,12 +2,14 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <linux/bpf.h>
 #include <arpa/inet.h>
 
 // copy from kernel
 #include "bpf_common.h"
 #include "be_byteshift.h"
+
 #include "ubpf.h"
 #include "hmap.h"
 
@@ -51,7 +53,6 @@ unsigned int __bpf_prog_run(void *ctx, const struct bpf_insn *insn);
 
 #define MAX_BPF_STACK 4096
 
-
 #define LOCK_PREFIX_HERE \
         ".pushsection .smp_locks,\"a\"\n"   \
         ".balign 4\n"               \
@@ -61,7 +62,7 @@ unsigned int __bpf_prog_run(void *ctx, const struct bpf_insn *insn);
 
 #define LOCK_PREFIX LOCK_PREFIX_HERE "\n\tlock; "
 
-//FIXME
+#if 0
 #define ilog2(x) x
 static bool is_power_of_2(unsigned long n)
 {
@@ -77,6 +78,15 @@ static bool is_power_of_2(unsigned long n)
         n >>= ilog2(__base);                \
     }                           \
     __mod;                          \
+})
+#endif
+
+#define do_div(n, base) \
+({ \
+	unsigned long __mod = 0; \
+	__mod = n % base; \
+	n = n / base; \
+	__mod; \
 })
 
 static inline u64 div64_u64_rem(u64 dividend, u64 divisor, u64 *remainder)
@@ -414,7 +424,9 @@ select_insn:
 		CONT;
 
 	JMP_TAIL_CALL: {
-#if 0
+		printf("no tail call support\n");
+		exit(1);
+#if 0 //no tail call support 
 		struct bpf_map *map = (struct bpf_map *) (unsigned long) BPF_R2;
 		struct bpf_array *array = container_of(map, struct bpf_array, map);
 		struct bpf_prog *prog;
@@ -625,66 +637,4 @@ load_byte:
 		printf("unknown opcode %02x\n", insn->code);
 		return 0;
 }
-#if 0
-struct elem {
-    struct hmap_node node;
-    void *key;
-    int key_size;
-    void *value;
-    int value_size;
-};
 
-int ubpf_insert_map(union bpf_attr *attr) {
-
-    return 0;
-}
-
-int ubpf_lookup_map(union bpf_attr *attr)
-{
-    struct elem *elem;
-    struct hmap_node *node;
-    void *key, *value;
-    uint32_t hash;
-
-    key = attr->key;
-    value = attr->value;
-
-    for (i = 0; i < attr->key_size; i++)
-        hash = hash_add(hash, *(uint32_t *)key);
-
-    node = hmap_first_with_hash(hmap, hash);
-
-    elem = CONTAINER_OF(node, struct elem, hmap_node);
-
-    memcpy(attr->value, elem->value, value_size);
-
-    return 0;
-}
-
-int ubpf_create_map(union bpf_attr *attr)
-{
-	printf("enter %s\n", __func__);
-
-    struct hmap hmap;
-/*
-     union bpf_attr attr = {
-         .map_type = map_type,
-         .key_size = key_size,
-         .value_size = value_size,
-         .max_entries = max_entries,
-         .map_flags = map_flags,
-     };
-*/
-    hmap_init(&hmap);
-     
-
-	return 0;
-}
-#endif
-/*
-int main()
-{
-    printf("test bpf interpreter\n");
-    return 0;
-}
-*/

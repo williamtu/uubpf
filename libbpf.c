@@ -36,7 +36,6 @@ int bpf_create_map(enum bpf_map_type map_type, int key_size, int value_size,
 	};
 
 // intercept: don't go into kernel
-
     fd = ubpf_create_map(&attr);
     printf("create map in userspace, fd = %d\n", fd);
 
@@ -139,7 +138,8 @@ int bpf_prog_load(enum bpf_prog_type prog_type,
     struct usk_buff skb;
     skb.data = build_packet();
     skb.data_end = skb.data + len; 
-    printf("run in userspace, return %d\n", __bpf_prog_run(&skb, insns));
+    printf("=== run in userspace ===\n");
+    printf("=== finish run in userspace, return %d ===\n\n", __bpf_prog_run(&skb, insns));
 
     return 0;
 

@@ -68,7 +68,7 @@ int ubpf_insert_map(union bpf_attr *attr)
     void *key, *value;
     int id = attr->map_fd;
     
-    printf("%s map_id %d\n", __func__, id);
+    //printf("%s map_id %d\n", __func__, id);
 
     /* lookup existing map */
     hmap = ubpf_get_hmap(id);
@@ -93,7 +93,7 @@ int ubpf_insert_map(union bpf_attr *attr)
         key += 4;
     }
 
-    printf("%s hash %x\n", __func__, hash);
+    //printf("%s hash %x\n", __func__, hash);
     hmap_insert(&hmap->hmap, &elem->node, hash);
 
     return 0;
@@ -119,8 +119,7 @@ void *ubpf_lookup_map(union bpf_attr *attr)
         key += 4;
     }
 
-    printf("%s hash = %x\n", __func__, hash);
-
+    //printf("%s hash = %x\n", __func__, hash);
     node = hmap_first_with_hash(&hmap->hmap, hash);
     if (!node)
         return NULL;

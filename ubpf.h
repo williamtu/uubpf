@@ -65,17 +65,17 @@ typedef unsigned long long u64;
 
 # define offsetof(typ, memb)     ((unsigned long)((char *)&(((typ *)0)->memb)))
 struct iphdr {
-    __u8    ihl:4,
+    u8    ihl:4,
         version:4;
-    __u8    tos;
-    __be16  tot_len;
-    __be16  id; 
-    __be16  frag_off;
-    __u8    ttl;
-    __u8    protocol;
-    __sum16 check;
-    __be32  saddr;
-    __be32  daddr;
+    u8    tos;
+    u16  tot_len;
+    u16  id; 
+    u16  frag_off;
+    u8    ttl;
+    u8    protocol;
+    u16 check;
+    u32  saddr;
+    u32  daddr;
     /*The options start here. */
 };
 

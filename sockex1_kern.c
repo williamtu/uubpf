@@ -23,6 +23,20 @@ struct bpf_map_def SEC("maps") my_map = {
 	.max_entries = 256,
 };
 
+SEC("socket0")
+int bpf_prog0(struct usk_buff *skb)
+{
+	return 0xef;
+}
+SEC("socket9")
+int bpf_prog9(struct usk_buff *skb)
+{
+	char fmt[] = "OK\n";
+	bpf_trace_printk(fmt, sizeof(fmt));
+	return 0xab;
+}
+
+
 static __always_inline void parse_ipv4(struct usk_buff *skb)
 {
 	u32 ip_proto;

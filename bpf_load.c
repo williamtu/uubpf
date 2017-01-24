@@ -48,6 +48,28 @@ static int populate_prog_array(const char *event, int prog_fd)
 	return 0;
 }
 
+static int save_insns(const char *event, struct bpf_insn *prog, int size)
+{
+	int fd, cnt;
+	char filename[256];
+
+	sprintf(filename, "%s.insn", event);
+	printf("save insns at %s\n", filename);
+
+	fd = open(filename, O_CREAT | O_RDWR, 0666);
+	if (fd < 0)
+		return -1;
+	
+	cnt = write(fd, (void *) prog, size);
+	if (cnt != size) {
+		perror("write failed: ");
+		return -1;
+	}
+
+	close(fd);
+	return 0;
+}
+
 static int load_and_attach(const char *event, struct bpf_insn *prog, int size)
 {
 	bool is_socket = strncmp(event, "socket", 6) == 0;
@@ -261,7 +283,7 @@ static int parse_relo_and_apply(Elf_Data *data, Elf_Data *symbols,
 
 int load_bpf_file(char *path)
 {
-	int fd, i;
+	int fd, i, ret;
 	Elf *elf;
 	GElf_Ehdr ehdr;
 	GElf_Shdr shdr, shdr_prog;
@@ -369,6 +391,10 @@ int load_bpf_file(char *path)
 		    memcmp(shname, "socket", 6) == 0 ||
 		    memcmp(shname, "cgroup/", 7) == 0)
 			load_and_attach(shname, data->d_buf, data->d_size);
+		ret = save_insns(shname, data->d_buf, data->d_size);
+		if (ret)
+			return ret;
+
 	}
 
 	close(fd);

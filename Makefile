@@ -64,3 +64,6 @@ clean:
 -I./include -I./arch/x86/include/uapi \
 -I./include/uapi -I./include/generated/uapi -include ./include/linux/kconfig.h
 
+# to generate C struct 
+#root@osboxes:~/uubpf# xxd --include socket3.insn 
+

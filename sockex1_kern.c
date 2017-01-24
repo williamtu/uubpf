@@ -90,11 +90,11 @@ int bpf_prog3(struct usk_buff *skb)
 	if (value == 2)
 		goto exit2;
 
-	printk("value = 0x%x\n", value);
+	//printk("value = 0x%x\n", value);
 exit2:
-	printk("value = 0x%x\n", value);
+	//printk("value = 0x%x\n", value);
 exit1:
-    return 0;
+    return value;
 }
 
 SEC("socket4") // test MAP

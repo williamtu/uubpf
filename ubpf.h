@@ -58,10 +58,15 @@ typedef unsigned long long u64;
 #define uload_half(skb, off) __constant_ntohs(*(u16 *)(skb->data + off))
 #define uload_word(skb, off) __constant_ntohl(*(u32 *)(skb->data + off))
 
+#define DEBUG 0
+#if DEBUG
 #define printk(fmt, ...)    \
 ({  char ___fmt[] = fmt;    \
     bpf_trace_printk(___fmt, sizeof(___fmt), ##__VA_ARGS__);\
 })
+#else
+#define printk(fmt, ...)    do {} while(0)
+#endif
 
 # define offsetof(typ, memb)     ((unsigned long)((char *)&(((typ *)0)->memb)))
 struct iphdr {

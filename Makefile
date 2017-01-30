@@ -56,6 +56,7 @@ verify_target_bpf: verify_cmds
 		-O2 -emit-llvm -g -c $< -o -| $(LLC) -march=bpf -filetype=obj -o $@
 clean:
 	@rm -f *.o
+	rm -f socket1.insn
 
 
 # LINUXSOURCE

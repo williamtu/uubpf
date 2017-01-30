@@ -8,11 +8,20 @@ https://github.com/iovisor/bcc/blob/master/examples/networking/http_filter/http-
 #include <bcc/proto.h>
 */
 #include <linux/bpf.h>
+#include <stdio.h>
 #include "ubpf.h"
 #include "bpf_helpers.h"
 
 #define IP_TCP 	6   
 #define ETH_HLEN 14
+/*
+struct bpf_map_def SEC("maps") my_map = {
+	.type = BPF_MAP_TYPE_HASH,
+	.key_size = sizeof(u64),
+	.value_size = sizeof(u64),
+	.max_entries = 256,
+};
+*/
 struct ethernet_t {
     char dstAddr[6]; /* bit<48> */
     char srcAddr[6]; /* bit<48> */
@@ -61,14 +70,15 @@ struct icmp_t {
 SEC("socket1")
 int bpf_prog1(struct usk_buff *skb) {
 
+	int host_offset = 0, url_offset = 0;
+	void *map_ret;
+
 	//struct ethernet_t *ethernet = cursor_advance(cursor, sizeof(*ethernet));
 	struct ethernet_t *ethernet = (struct ethernet_t *)(skb->data);
 	//filter IP packets (ethernet type = 0x0800)
 	if (!(__constant_ntohs(ethernet->type) == 0x0800)) {
 		goto DROP;	
 	}
-	else
-		printk("IP");
 
 	//struct ip_t *ip = cursor_advance(cursor, sizeof(*ip));
 	struct ip_t *ip = (struct ip_t *)(skb->data + sizeof(*ethernet));
@@ -76,8 +86,6 @@ int bpf_prog1(struct usk_buff *skb) {
 	if (ip->nextp != IP_TCP) {
 		goto DROP;
 	}
-	else
-		printk("TCP\n");
 
 	u32  tcp_header_length = 0;
 	u32  ip_header_length = 0;
@@ -92,13 +100,11 @@ int bpf_prog1(struct usk_buff *skb) {
 	//e.g. ip->hlen = 5 ; IP Header Length = 5 x 4 byte = 20 byte
 	ip_header_length = ip->hlen << 2;    //SHL 2 -> *4 multiply
 		
-	printk("ip_header_len %x\n", ip_header_length);
 	//calculate tcp header length
 	//value to multiply *4
 	//e.g. tcp->offset = 5 ; TCP Header Length = 5 x 4 byte = 20 byte
 	tcp_header_length = tcp->offset << 2; //SHL 2 -> *4 multiply
 
-	printk("tcp_header_len %x\n", tcp_header_length);
 	//calculate patload offset and length
 	payload_offset = ETH_HLEN + ip_header_length + tcp_header_length; 
 	payload_length = ip->tlen - ip_header_length - tcp_header_length;
@@ -123,8 +129,33 @@ int bpf_prog1(struct usk_buff *skb) {
 		j++;
 	}
 	//printk("ip hlen %d payload offset %d\n", ip_header_length, payload_offset);
-	printk("start parsing HTTP message");
+	//printk("ip hlen %d payload offset %d\n", ip_header_length, payload_offset);
+	//printk("start parsing HTTP message: %x %x %x", p[0], p[1], p[2]);
+
+	// assume we know the offset of HOST
+	// 6 = "HOST: "
+	//url_offset = payload_offset + host_offset + 6; 
+	char url[8];
+	printk("first HOST byte: %x\n",  *(u8 *)(skb->data + 0x65));
+	url_offset = 0x65;
+
+	// read 8 byte as key
+	for (i = 0; i < 8; i++)
+		url[i] = *(u8 *)(skb->data + url_offset + i);
 	
+	u64 key = *(u64 *)url;
+	
+	printk("key %lx", key);
+
+	map_ret = bpf_map_lookup_elem(NULL, (void *)key);
+	if (!map_ret) {
+		printk("key %lx not found", key);
+		return 1; //PASS 
+	}
+	else {
+		printk("match key %lx", key);
+		return 0; //DROP
+	}
 	//find a match with an HTTP message
 	//HTTP
 	if ((p[0] == 'H') && (p[1] == 'T') && (p[2] == 'T') && (p[3] == 'P')) {

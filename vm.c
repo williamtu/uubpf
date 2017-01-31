@@ -148,6 +148,9 @@ static inline u64 ubpf_call_base(s32 id, u64 r1, u64 r2, u64 r3,
         attr.map_fd = r1; // map_fd 
         attr.key = r2;
         printf("r1 %llx r2 %llx\n", r1, r2);
+
+	if (r1 == 0)
+		return 0;
         return (u64)ubpf_lookup_map(&attr);
     }
     case BPF_FUNC_map_update_elem: { /* int map_update_elem(&map, &key, &value, flags) */

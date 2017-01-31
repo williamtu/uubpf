@@ -120,14 +120,15 @@ int bpf_prog1(struct usk_buff *skb) {
 
 	//load first 7 byte of payload into p (payload_array)
 	//direct access to skb not allowed
+	/*
 	char p[7];
 	int i = 0;
 	int j = 0;
 	for (i = payload_offset ; i < (payload_offset + 7) ; i++) {
-		//p[j] = uload_byte(skb , i);
 		p[j] = *(u8 *)(skb->data + i);
 		j++;
 	}
+	*/
 	//printk("ip hlen %d payload offset %d\n", ip_header_length, payload_offset);
 	//printk("ip hlen %d payload offset %d\n", ip_header_length, payload_offset);
 	//printk("start parsing HTTP message: %x %x %x", p[0], p[1], p[2]);
@@ -136,8 +137,8 @@ int bpf_prog1(struct usk_buff *skb) {
 	// 6 = "HOST: "
 	//url_offset = payload_offset + host_offset + 6; 
 	char url[8];
-	printk("first HOST byte: %x\n",  *(u8 *)(skb->data + 0x65));
-	url_offset = 0x65;
+	url_offset = payload_offset + 62;
+	printk("first HOST byte: %x\n",  *(u8 *)(skb->data + url_offset));
 
 	// read 8 byte as key
 	for (i = 0; i < 8; i++)
@@ -158,6 +159,7 @@ int bpf_prog1(struct usk_buff *skb) {
 	}
 	//find a match with an HTTP message
 	//HTTP
+		
 	if ((p[0] == 'H') && (p[1] == 'T') && (p[2] == 'T') && (p[3] == 'P')) {
 		printk("HTTP");
 		goto KEEP;

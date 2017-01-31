@@ -58,7 +58,7 @@ typedef unsigned long long u64;
 #define uload_half(skb, off) __constant_ntohs(*(u16 *)(skb->data + off))
 #define uload_word(skb, off) __constant_ntohl(*(u32 *)(skb->data + off))
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #define printk(fmt, ...)    \
 ({  char ___fmt[] = fmt;    \
